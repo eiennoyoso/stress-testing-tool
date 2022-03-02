@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -73,10 +74,10 @@ func listenRequestSent(
 }
 
 func buildConnection(scheme string, host string, port string) (net.Conn, error) {
-	var dialer = net.Dialer{Timeout: 1 * time.Second}
+	var dialer = net.Dialer{Timeout: 60 * time.Second}
 	conn, err := dialer.Dial("tcp", host + ":" + port)
 	if err != nil {
-		log.Println(err)
+		log.Println("Connect error: ", err)
 		return nil, err
 	}
 
@@ -87,7 +88,7 @@ func buildConnection(scheme string, host string, port string) (net.Conn, error) 
 		tlsClient := tls.Client(conn, &tlsConfig)
 		err = tlsClient.Handshake()
 		if err != nil {
-			log.Println(err)
+			log.Println("TLS Handshake error", err)
 			return nil, err
 		}
 
@@ -163,7 +164,7 @@ func fetch(
 	if err != nil {
 		log.Println("Error reading response", err)
 	} else {
-		log.Println(string(response))
+		log.Println("Response:", strings.TrimSpace(string(response)))
 	}
 
 	conn.Close()

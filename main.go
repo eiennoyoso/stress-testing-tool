@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
@@ -71,6 +72,31 @@ func listenRequestSent(
 	}
 }
 
+func buildConnection(scheme string, host string, port string) (net.Conn, error) {
+	var dialer = net.Dialer{Timeout: 1 * time.Second}
+	conn, err := dialer.Dial("tcp", host + ":" + port)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	if scheme == "https" {
+		tlsConfig := tls.Config{
+			InsecureSkipVerify: true,
+		}
+		tlsClient := tls.Client(conn, &tlsConfig)
+		err = tlsClient.Handshake()
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		return tlsClient, nil
+	} else {
+		return conn, nil
+	}
+}
+
 func fetch(
 	httpMethod string,
 	u *url.URL,
@@ -87,13 +113,6 @@ func fetch(
 		default:
 			return errors.New("Unsupported schema")
 		}
-	}
-
-	var dialer = net.Dialer{Timeout: 1 * time.Second}
-	conn, err := dialer.Dial("tcp", u.Hostname() + ":" + port)
-	if err != nil {
-		log.Println(err)
-		return err
 	}
 
 	var requestUri = u.RequestURI()
@@ -124,9 +143,16 @@ func fetch(
 		payload,
 	)
 
+	var conn, err = buildConnection(u.Scheme, u.Hostname(), port)
+	if err != nil {
+		log.Println("Connection error", err)
+		return err
+	}
+
 	_, err = conn.Write([]byte(request))
 	if err != nil {
-		log.Fatalln("Error sending request", err)
+		log.Println("Error sending request", err)
+		return err
 	}
 
 	concurrentRequestCountChannel <- 1

@@ -3,28 +3,20 @@ FROM alpine:3.13.2 as build
 RUN \
     # install requirements
     apk update && \
-    apk add --no-cache --virtual .build-deps \
+    apk add --no-cache \
         ca-certificates \
         make \
         bash \
         wget \
         git \
         curl \
-        go \
-    # update certs
-    update-ca-certificates && \
+        go && \
     # make and install source
-    make build && \
-    make install && \
-    # clear
-    make clean && \
-    yarn cache clean --all && \
-    cd .. && rm -rf opcache-dashboard && \
-    apk del .build-deps
+    make build && make install
 
 FROM alpine:3.13.2 as run
 
-COPY --from=build /usr/local/bin/opcache-dashboard /usr/local/bin/opcache-dashboard
+COPY --from=build /usr/local/bin/ltt /usr/local/bin/ltt
 
 # start service
-ENTRYPOINT ["/usr/local/bin/opcache-dashboard"]
+ENTRYPOINT ["/usr/local/bin/ltt"]

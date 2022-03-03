@@ -1,6 +1,7 @@
 SHELL=bash
 
 GOPATH=$(shell go env GOPATH)
+BINARY_NAME=ltt
 
 default: build
 
@@ -33,6 +34,7 @@ docker-login:
 docker-build:
 	@echo "Building docker image version: " $(GITHUB_LATEST_VERSION)
 	docker build \
+
 		--tag sokil/ltt:latest \
 		-f ./Dockerfile .
 

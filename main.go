@@ -21,6 +21,20 @@ type ConcurrentCounter struct {
 	mutex sync.RWMutex
 }
 
+var userAgents = []string {
+	"Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0) Opera 12.14",
+	"Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:26.0) Gecko/20100101 Firefox/26.0",
+	"Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.9.1.3) Gecko/20090913 Firefox/3.5.3",
+	"Mozilla/5.0 (Windows; U; Windows NT 6.1; en; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 (.NET CLR 3.5.30729)",
+	"Mozilla/5.0 (Windows NT 6.2) AppleWebKit/535.7 (KHTML, like Gecko) Comodo_Dragon/16.1.1.0 Chrome/16.0.912.63 Safari/535.7",
+	"Mozilla/5.0 (Windows; U; Windows NT 5.2; en-US; rv:1.9.1.3) Gecko/20090824 Firefox/3.5.3 (.NET CLR 3.5.30729)",
+	"Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.1) Gecko/20090718 Firefox/3.5.1",
+	"Mozilla / 5.0(X11;Linux i686; rv:81.0) Gecko / 20100101 Firefox / 81.0",
+	"Mozilla / 5.0(Linuxx86_64;rv:81.0) Gecko / 20100101Firefox / 81.0",
+	"Mozilla / 5.0(X11;Ubuntu;Linuxi686;rv:81.0) Gecko / 20100101Firefox / 81.0",
+	"Mozilla / 5.0(X11;Ubuntu;Linuxx86_64;rv:81.0) Gecko / 20100101Firefox / 81.0",
+	"Mozilla / 5.0(X11;Fedora;Linuxx86_64;rv:81.0) Gecko / 20100101Firefox / 81.0",
+}
 func main() {
 	var httpMethod = flag.String("httpMethod", "GET", "HTTP Method: GET or POST")
 	var rawurl = flag.String("url", "", "URL")
@@ -88,7 +102,7 @@ func buildConnection(scheme string, host string, port string) (net.Conn, error) 
 		tlsClient := tls.Client(conn, &tlsConfig)
 		err = tlsClient.Handshake()
 		if err != nil {
-			log.Println("TLS Handshake error", err)
+			log.Println("TLS Handshake error: ", err)
 			return nil, err
 		}
 
@@ -123,13 +137,20 @@ func fetch(
 		requestUri = fmt.Sprintf("%s?rand=%d", requestUri, rand.Intn(10))
 	}
 
+	// choose random user agent
+	var userAgent = userAgents[rand.Intn(len(userAgents))]
+
+	// build headers
 	var headers = "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n" //Accept-Language: en-us,en;q=0.5\nAccept-Encoding: gzip,deflate\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\nKeep-Alive: 115\nConnection: keep-alive\n"
-	headers = headers + "User-agent: Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.0) Opera 12.14\n"
+
+	headers = headers + "User-agent: " + userAgent + "\n"
+
 	if httpMethod == "POST" && postData != nil && *postData != "" {
 		headers = fmt.Sprintf("%sContent-Length: %d\n", headers, len(*postData))
 		headers = headers + "Content-type: application/x-www-form-urlencoded\n"
 	}
 
+	// build payload
 	var payload = ""
 	if httpMethod == "POST" && postData != nil && *postData != ""  {
 		payload = "\n" + *postData + "\n"
@@ -146,13 +167,13 @@ func fetch(
 
 	var conn, err = buildConnection(u.Scheme, u.Hostname(), port)
 	if err != nil {
-		log.Println("Connection error", err)
+		log.Println("Connection error: ", err)
 		return err
 	}
 
 	_, err = conn.Write([]byte(request))
 	if err != nil {
-		log.Println("Error sending request", err)
+		log.Println("Error sending request: ", err)
 		return err
 	}
 
@@ -162,9 +183,9 @@ func fetch(
 	response, err := reader.ReadString('\n')
 
 	if err != nil {
-		log.Println("Error reading response", err)
+		log.Println("Error reading response: ", err)
 	} else {
-		log.Println("Response:", strings.TrimSpace(string(response)))
+		log.Println("Response: ", strings.TrimSpace(string(response)))
 	}
 
 	conn.Close()

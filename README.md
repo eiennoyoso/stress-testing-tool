@@ -23,7 +23,7 @@ Now maximum number of outbound sockets a host can create from a particular IP ad
 Allow reuse of sockets:
 
 ```shell
-net.ipv4.tcp_tw_reuse=1
+sysctl net.ipv4.tcp_tw_reuse=1
 ```
 
 This allows fast cycling of sockets in time_wait state and re-using them.

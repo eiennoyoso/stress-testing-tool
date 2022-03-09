@@ -34,7 +34,6 @@ docker-login:
 docker-build:
 	@echo "Building docker image version: " $(GITHUB_LATEST_VERSION)
 	docker build \
-
 		--tag sokil/ltt:latest \
 		-f ./Dockerfile .
 

@@ -57,7 +57,7 @@ func main() {
 
 	for {
 		if currentConcurrentRequestCounter.count == *maxConcurrentRequestCount {
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(50 * time.Millisecond)
 			continue
 		}
 
@@ -141,7 +141,7 @@ func fetch(
 	var userAgent = userAgents[rand.Intn(len(userAgents))]
 
 	// build headers
-	var headers = "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\n" //Accept-Language: en-us,en;q=0.5\nAccept-Encoding: gzip,deflate\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\nKeep-Alive: 115\nConnection: keep-alive\n"
+	var headers = "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\nAccept-Language: en-us,en;q=0.5\nAccept-Encoding: gzip,deflate\nAccept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\nConnection: close\n"
 
 	headers = headers + "User-agent: " + userAgent + "\n"
 
@@ -166,10 +166,13 @@ func fetch(
 	)
 
 	var conn, err = buildConnection(u.Scheme, u.Hostname(), port)
+
 	if err != nil {
 		log.Println("Connection error: ", err)
 		return err
 	}
+
+	defer conn.Close()
 
 	_, err = conn.Write([]byte(request))
 	if err != nil {
@@ -187,8 +190,6 @@ func fetch(
 	} else {
 		log.Println("Response: ", strings.TrimSpace(string(response)))
 	}
-
-	conn.Close()
 
 	return nil
 }

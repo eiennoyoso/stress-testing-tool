@@ -10,9 +10,12 @@ RUN \
         wget \
         git \
         curl \
-        go && \
-    # make and install source
-    make build && make install
+        go
+
+COPY . /build
+
+# make and install source
+RUN cd /build && make build && make install
 
 FROM alpine:3.13.2 as run
 
